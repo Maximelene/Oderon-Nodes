@@ -75,11 +75,6 @@ namespace OderonNodes
         }
         #endregion
 
-
-
-
-
-
         #region Movement Methods
         // Calculate the best path to move from a node to another. Returns a Path class, including the path itself, and its cost
         public Path MovementPath(Node sourceNode, Node targetNode)
@@ -426,11 +421,6 @@ namespace OderonNodes
         }
         #endregion
 
-
-
-
-
-
         public void BuildNeighboursGraph()
         {
             // Go through each node
@@ -461,20 +451,6 @@ namespace OderonNodes
                 }
             }
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     }
 
     #region Classes & Enums

@@ -4,7 +4,6 @@ using UnityEngine.AI;
 
 namespace OderonNodes
 {
-    [RequireComponent(typeof(NavMeshAgent))]
     public class Entity : MonoBehaviour
     {
         #region Variables
@@ -12,7 +11,8 @@ namespace OderonNodes
         public Node node;
 
         [Header("Movement")]
-        GameObject nextWaypoint;
+        [SerializeField] int movementLeft = 3;
+        MovementWaypoint nextWaypoint;
 
         // Components
         NavMeshAgent navMeshAgent;
@@ -106,8 +106,8 @@ namespace OderonNodes
         {
             // Create the variables
             int createdWaypoints = 0;
-            GameObject firstCreatedWaypoint = null;
-            GameObject previousCreatedWaypoint = null; // Store the previously created waypoint (to update its informations after the next one is created)
+            MovementWaypoint firstCreatedWaypoint = null;
+            MovementWaypoint previousCreatedWaypoint = null; // Store the previously created waypoint (to update its informations after the next one is created)
 
             // Create the Movement Waypoints
             foreach (Node node2 in path)
@@ -116,24 +116,23 @@ namespace OderonNodes
                 if (node != node2)
                 {
                     // Create the Waypoint
-                    GameObject createdWaypoint = new GameObject();
-                    MovementWaypoint movementWaypoint = createdWaypoint.AddComponent<MovementWaypoint>();
-                    createdWaypoint.transform.position = new Vector3(node2.transform.position.x, 0, node2.transform.position.z);
+                    MovementWaypoint createdMovementWaypoint = new GameObject().AddComponent<MovementWaypoint>();
+                    createdMovementWaypoint.gameObject.transform.position = new Vector3(node2.transform.position.x, 0, node2.transform.position.z);
 
                     // Set the waypoint informations
-                    movementWaypoint.associatedCharacter = gameObject;
-                    movementWaypoint.node = node2;
+                    createdMovementWaypoint.associatedCharacter = gameObject;
+                    createdMovementWaypoint.node = node2;
 
                     // Set this newly created waypoint as the last waypoint's next waypoint
                     if (previousCreatedWaypoint)
-                    { previousCreatedWaypoint.GetComponent<MovementWaypoint>().nextWaypoint = createdWaypoint; }
+                    { previousCreatedWaypoint.GetComponent<MovementWaypoint>().nextWaypoint = createdMovementWaypoint; }
 
-                    // Store this weapon as the new "previous" one
-                    previousCreatedWaypoint = createdWaypoint;
+                    // Store this waypoint as the new "previous" one
+                    previousCreatedWaypoint = createdMovementWaypoint;
 
                     // If this is the first created waypoint, store it
                     if (!firstCreatedWaypoint)
-                    { firstCreatedWaypoint = createdWaypoint; }
+                    { firstCreatedWaypoint = createdMovementWaypoint; }
 
                     // Increase the number of waypoints created (to limit movement to the desired number)
                     createdWaypoints++;
@@ -175,6 +174,9 @@ namespace OderonNodes
 
                     // Update the character's position
                     node = movementWaypoint.node;
+
+                    // Reduce movement left
+                    movementLeft = Mathf.Clamp(movementLeft - Mathf.RoundToInt(movementWaypoint.node.CostToEnter()), 0, 100);
 
                     enterNewNodeObservers?.Invoke(movementWaypoint.node.CostToEnter());
 
@@ -234,6 +236,10 @@ namespace OderonNodes
 
         public delegate void OnEntityEntersNodeAlteredByThisEntityDelegate(Entity entity); public OnEntityEntersNodeAlteredByThisEntityDelegate entityEntersNodeAlteredByThisEntity;
         public delegate void OnEntityFinishesTurnOnNodeAlteredByThisEntityDelegate(Entity entity); public OnEntityFinishesTurnOnNodeAlteredByThisEntityDelegate entityFinishesTurnOnNodeAlteredByThisEntity;
+        #endregion
+
+        #region Getters & Setters
+        public int MovementLeft { get { return movementLeft; } set { movementLeft = value; } }
         #endregion
     }
 }
