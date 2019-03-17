@@ -12,7 +12,8 @@ namespace OderonNodes
 
         [Header("Movement")]
         [SerializeField] int movementLeft = 3;
-        MovementWaypoint nextWaypoint;
+        NewMovementWaypoint nextWaypoint;
+        List<NewMovementWaypoint> movementWaypoints = new List<NewMovementWaypoint>();
 
         // Components
         NavMeshAgent navMeshAgent;
@@ -105,80 +106,74 @@ namespace OderonNodes
         public void MoveTo(Node destination, List<Node> path)
         {
             // Create the variables
-            int createdWaypoints = 0;
-            MovementWaypoint firstCreatedWaypoint = null;
-            MovementWaypoint previousCreatedWaypoint = null; // Store the previously created waypoint (to update its informations after the next one is created)
+            int movementCostSpent = 0;
+            NewMovementWaypoint previouslyCreatedWaypoint = null;
 
             // Create the Movement Waypoints
-            foreach (Node node2 in path)
+            foreach (Node pathNode in path)
             {
                 // Make sure to not create a waypoint on the current node, and to not create more waypoints than required
-                if (node != node2)
+                if (node != pathNode && (movementCostSpent + Mathf.RoundToInt(pathNode.CostToEnter())) <= movementLeft)
                 {
                     // Create the Waypoint
-                    MovementWaypoint createdMovementWaypoint = new GameObject().AddComponent<MovementWaypoint>();
-                    createdMovementWaypoint.gameObject.transform.position = new Vector3(node2.transform.position.x, 0, node2.transform.position.z);
+                    NewMovementWaypoint createdWaypoint = new NewMovementWaypoint
+                    {
+                        node = pathNode,
+                        position = new Vector3(pathNode.transform.position.x, 0, pathNode.transform.position.z)
+                    };
 
-                    // Set the waypoint informations
-                    createdMovementWaypoint.associatedCharacter = gameObject;
-                    createdMovementWaypoint.node = node2;
+                    // Set this newly created Waypoint as the last Waypoint's next Waypoint
+                    if (previouslyCreatedWaypoint != null)
+                    { previouslyCreatedWaypoint.nextWaypoint = createdWaypoint; }
 
-                    // Set this newly created waypoint as the last waypoint's next waypoint
-                    if (previousCreatedWaypoint)
-                    { previousCreatedWaypoint.GetComponent<MovementWaypoint>().nextWaypoint = createdMovementWaypoint; }
+                    // Store this Waypoint as the new "previous" one
+                    previouslyCreatedWaypoint = createdWaypoint;
 
-                    // Store this waypoint as the new "previous" one
-                    previousCreatedWaypoint = createdMovementWaypoint;
+                    // Add this Waypoint to the list
+                    movementWaypoints.Add(createdWaypoint);
 
-                    // If this is the first created waypoint, store it
-                    if (!firstCreatedWaypoint)
-                    { firstCreatedWaypoint = createdMovementWaypoint; }
-
-                    // Increase the number of waypoints created (to limit movement to the desired number)
-                    createdWaypoints++;
+                    // Update the path cost
+                    movementCostSpent += Mathf.RoundToInt(pathNode.CostToEnter());
                 }
             }
 
             // If at least a waypoint has been created, set the character destination, and reduce its movement left
-            if (createdWaypoints > 0)
+            if (movementWaypoints.Count > 0)
             {
-                nextWaypoint = firstCreatedWaypoint;
+                nextWaypoint = movementWaypoints[0];
 
                 // Start moving
-                MoveToWaypoint();
+                MoveToNextWaypoint();
             }
         }
 
-        public void MoveToWaypoint()
+        public void MoveToNextWaypoint()
         {
             startMovingObservers?.Invoke();
-            navMeshAgent.SetDestination(nextWaypoint.transform.position);
+            navMeshAgent.SetDestination(nextWaypoint.position);
         }
 
         public void ProcessMovement()
         {
-            if (nextWaypoint)
+            if (nextWaypoint != null)
             {
-                // Get the waypoint informations
-                MovementWaypoint movementWaypoint = nextWaypoint.GetComponent<MovementWaypoint>();
-
                 // Get the real distance between the character and its current node, and between the character and its next node
                 float currentNodeDistance = Vector3.Distance(node.transform.position, transform.position);
-                float nextWaypointDistance = Vector3.Distance(nextWaypoint.transform.position, transform.position);
+                float nextWaypointDistance = Vector3.Distance(nextWaypoint.position, transform.position);
 
                 // If the character is nearer from its next node than from its current one, process the position change
-                if (nextWaypoint.GetComponent<MovementWaypoint>().node != node && nextWaypointDistance <= currentNodeDistance)
+                if (nextWaypoint.node != node && nextWaypointDistance <= currentNodeDistance)
                 {
                     // Free the previous node
                     node.FreeNode();
 
                     // Update the character's position
-                    node = movementWaypoint.node;
+                    node = nextWaypoint.node;
 
                     // Reduce movement left
-                    movementLeft = Mathf.Clamp(movementLeft - Mathf.RoundToInt(movementWaypoint.node.CostToEnter()), 0, 100);
+                    movementLeft = Mathf.Clamp(movementLeft - Mathf.RoundToInt(nextWaypoint.node.CostToEnter()), 0, 100);
 
-                    enterNewNodeObservers?.Invoke(movementWaypoint.node.CostToEnter());
+                    enterNewNodeObservers?.Invoke(nextWaypoint.node.CostToEnter());
 
                     // Occupy the node
                     node.OccupyNode(gameObject);
@@ -188,27 +183,30 @@ namespace OderonNodes
                 if (nextWaypointDistance <= 0.3f)
                 {
                     // Trigger the fact that the character entered a Node
-                    nextWaypoint.GetComponent<MovementWaypoint>().node.EnterNode(this);
+                    nextWaypoint.node.EnterNode(this);
 
                     // Check to see if the character should move to another waypoint
-                    if (movementWaypoint.nextWaypoint)
+                    if (nextWaypoint.nextWaypoint != null)
                     {
-                        nextWaypoint = movementWaypoint.nextWaypoint;
-                        MoveToWaypoint();
+                        nextWaypoint = nextWaypoint.nextWaypoint;
+                        MoveToNextWaypoint();
                     }
                     // This is the final waypoint
                     else
                     {
-                        nextWaypoint = null;
-                        stopMovingObservers?.Invoke();
+                        StopMoving();
                     }
-
-                    // Destroy the waypoint
-                    Destroy(movementWaypoint.gameObject);
                 }
                 else
-                { MoveToWaypoint(); }
+                { MoveToNextWaypoint(); }
             }
+        }
+
+        public void StopMoving()
+        {
+            nextWaypoint = null;
+            movementWaypoints.Clear();
+            stopMovingObservers?.Invoke();
         }
         #endregion
 
@@ -241,5 +239,12 @@ namespace OderonNodes
         #region Getters & Setters
         public int MovementLeft { get { return movementLeft; } set { movementLeft = value; } }
         #endregion
+
+        public class NewMovementWaypoint
+        {
+            public Node node;
+            public Vector3 position;
+            public NewMovementWaypoint nextWaypoint;
+        }
     }
 }
