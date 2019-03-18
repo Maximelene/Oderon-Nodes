@@ -8,12 +8,12 @@ namespace OderonNodes
     {
         #region Variables
         [Header("Position")]
-        public Node node;
+        [SerializeField] Node node;
 
         [Header("Movement")]
         [SerializeField] int movementLeft = 3;
-        NewMovementWaypoint nextWaypoint;
-        List<NewMovementWaypoint> movementWaypoints = new List<NewMovementWaypoint>();
+        MovementWaypoint nextWaypoint;
+        List<MovementWaypoint> movementWaypoints = new List<MovementWaypoint>();
 
         // Components
         NavMeshAgent navMeshAgent;
@@ -107,7 +107,7 @@ namespace OderonNodes
         {
             // Create the variables
             int movementCostSpent = 0;
-            NewMovementWaypoint previouslyCreatedWaypoint = null;
+            MovementWaypoint previouslyCreatedWaypoint = null;
 
             // Create the Movement Waypoints
             foreach (Node pathNode in path)
@@ -116,7 +116,7 @@ namespace OderonNodes
                 if (node != pathNode && (movementCostSpent + Mathf.RoundToInt(pathNode.CostToEnter())) <= movementLeft)
                 {
                     // Create the Waypoint
-                    NewMovementWaypoint createdWaypoint = new NewMovementWaypoint
+                    MovementWaypoint createdWaypoint = new MovementWaypoint
                     {
                         node = pathNode,
                         position = new Vector3(pathNode.transform.position.x, 0, pathNode.transform.position.z)
@@ -237,14 +237,17 @@ namespace OderonNodes
         #endregion
 
         #region Getters & Setters
+        public Node Node { get { return node; } }
         public int MovementLeft { get { return movementLeft; } set { movementLeft = value; } }
         #endregion
 
-        public class NewMovementWaypoint
+        #region Classes & Enums
+        public class MovementWaypoint
         {
             public Node node;
             public Vector3 position;
-            public NewMovementWaypoint nextWaypoint;
+            public MovementWaypoint nextWaypoint;
         }
+        #endregion
     }
 }
