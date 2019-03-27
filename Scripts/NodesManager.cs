@@ -10,7 +10,7 @@ namespace OderonNodes
 
         #region Variables
         // Lists
-        public List<Node> nodesList = new List<Node>(); // List of all the nodes (without any other information)
+        List<Node> nodesList = new List<Node>(); // List of all the nodes (without any other information)
         Dictionary<Node.CubeCoordinates, Node> nodesCubeCoordinates = new Dictionary<Node.CubeCoordinates, Node>(); // List of all the cube coordinates, with the associated node
 
         // Status
@@ -293,14 +293,14 @@ namespace OderonNodes
 
         #region Distance & Range Methods
         // Calculate the distance between two nodes, using Cube Coordinates (the distance between a node and one of its neighbours is 1) - https://www.redblobgames.com/grids/hexagons/#distances
-        public float Distance(Node sourceNode, Node targetNode)
+        public static int Distance(Node sourceNode, Node targetNode)
         {
             // Get the nodes' coordinates
             Node.CubeCoordinates sourceCoordinates = sourceNode.cubeCoordinates;
             Node.CubeCoordinates targetCoordinates = targetNode.cubeCoordinates;
 
             // Calculate the distance
-            return (Mathf.Abs(sourceCoordinates.x - targetCoordinates.x) + Mathf.Abs(sourceCoordinates.y - targetCoordinates.y) + Mathf.Abs(sourceCoordinates.z - targetCoordinates.z)) / 2;
+            return Mathf.RoundToInt((Mathf.Abs(sourceCoordinates.x - targetCoordinates.x) + Mathf.Abs(sourceCoordinates.y - targetCoordinates.y) + Mathf.Abs(sourceCoordinates.z - targetCoordinates.z)) / 2);
         }
 
         // List all the nodes in a specific range of a specific node
@@ -325,10 +325,13 @@ namespace OderonNodes
 
         #region Line of Sight Methods
         // Function testing if there is a clear line of sight between two nodes
-        public bool IsTargetNodeVisible(Node sourceNode, Node targetNode)
+        public static bool IsTargetNodeVisible(Node sourceNode, Node targetNode)
         {
             if (!targetNode.parameters.blocksLineOfSight)
             {
+                // get the Nodes list
+                List<Node> nodesList = GetNodesManager().NodesList;
+
                 // Create the variables
                 bool foundNodeBlockingSight = false;
 
@@ -451,6 +454,20 @@ namespace OderonNodes
                 }
             }
         }
+
+        // Method getting the current active Nodes Manager
+        public static NodesManager GetNodesManager()
+        {
+            var controllers = FindObjectsOfType<NodesManager>();
+
+            if (controllers.Length > 1) { Debug.LogError("WARNING: You have more than one Node Managers active"); }
+
+            return controllers[0];
+        }
+
+        #region getters & Setters
+        public List<Node> NodesList { get { return nodesList; } }
+        #endregion
     }
 
     #region Classes & Enums
