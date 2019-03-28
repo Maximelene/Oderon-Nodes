@@ -12,15 +12,15 @@ namespace OderonNodes
         // Lists
         List<Node> nodesList = new List<Node>(); // List of all the nodes (without any other information)
         Dictionary<Node.CubeCoordinates, Node> nodesCubeCoordinates = new Dictionary<Node.CubeCoordinates, Node>(); // List of all the cube coordinates, with the associated node
-
-        // Status
-        public Node currentlySelectedNode = null;
         #endregion
 
         #region Nodes Initialization
-        // Function calculating the coordinates of every node
-        public void InitializeNodes()
+        // Function calculating the coordinates of every node. Should be called after loading the map.
+        public void RefreshNodes()
         {
+            nodesList.Clear();
+            nodesCubeCoordinates.Clear();
+
             // Create the variables
             GameObject initialNode = null;
             int i = 1;
@@ -54,6 +54,37 @@ namespace OderonNodes
             // Build the neighbour's graph
             BuildNeighboursGraph();
         }
+
+        public void BuildNeighboursGraph()
+        {
+            // Go through each node
+            foreach (Node initialNode in nodesList)
+            {
+                // Go through each other node, to find the neighbours
+                foreach (Node node in nodesList)
+                {
+                    if (node != initialNode)
+                    {
+                        // Calculate the differences in each axis
+                        float xDifference = node.coordinates.column - initialNode.coordinates.column;
+                        float yDifference = node.coordinates.row - initialNode.coordinates.row;
+
+                        // The node is on the same row, with only a difference of 1 in its line
+                        if (xDifference == 0 && yDifference == 1 || xDifference == 0 && yDifference == -1)
+                        { initialNode.neighbours.Add(node); }
+                        // The node is in a neigbouring row, but on the same line
+                        else if (xDifference == 1 && yDifference == 0 || xDifference == -1 && yDifference == 0)
+                        { initialNode.neighbours.Add(node); }
+                        // The node is in a neighbouring row, but on the previous line (for tiles that aren't shifted)
+                        else if (xDifference == -1 && yDifference == -1 && initialNode.isOnAShiftedColumn == false || xDifference == 1 && yDifference == -1 && initialNode.isOnAShiftedColumn == false)
+                        { initialNode.neighbours.Add(node); }
+                        // The node is in a neighbouring row, but on the next line (for tiles that are shifted)
+                        else if (xDifference == -1 && yDifference == 1 && initialNode.isOnAShiftedColumn == true || xDifference == 1 && yDifference == 1 && initialNode.isOnAShiftedColumn == true)
+                        { initialNode.neighbours.Add(node); }
+                    }
+                }
+            }
+        }
         #endregion
 
         #region Highlighting
@@ -77,11 +108,14 @@ namespace OderonNodes
 
         #region Movement Methods
         // Calculate the best path to move from a node to another. Returns a Path class, including the path itself, and its cost
-        public Path MovementPath(Node sourceNode, Node targetNode)
+        public static MovementPath MovementPath(Node sourceNode, Node targetNode, List<Node> nodesList = null)
         {
             // Using the Dijkstra algorithm (tutorial used: https://www.youtube.com/watch?v=QhaKb5N3Hj8&list=PLbghT7MmckI55gwJLrDz0UtNfo9oC0K1Q&index=5)
             // Create the return Path
-            Path returnPath = new Path();
+            MovementPath returnPath = new MovementPath();
+
+            // If no Nodes List was specified, get it from the current Nodes Manager instance
+            if (nodesList == null) { nodesList = GetNodesList(); }
 
             // Create the dictionaries listing the distance to the nodes, and the previous node used
             Dictionary<Node, float> dist = new Dictionary<Node, float>();
@@ -174,7 +208,7 @@ namespace OderonNodes
         }
 
         // List all the accessible tiles from a specific tile, with a defined movement range
-        public List<Node> ListAccessibleTiles(Node source, float range)
+        public static List<Node> ListAccessibleTiles(Node source, float range)
         {
             // Create the variables
             List<Node> returnList = new List<Node>();
@@ -304,19 +338,19 @@ namespace OderonNodes
         }
 
         // List all the nodes in a specific range of a specific node
-        public List<Node> NodesInRange(Node source, float minRange, float maxRange)
+        public static List<Node> NodesInRange(Node source, float minRange, float maxRange, List<Node> nodesList = null)
         {
             // Create the variable
             List<Node> nodesInRange = new List<Node>();
 
+            // If no Nodes List was specified, get it from the current Nodes Manager instance
+            if (nodesList == null) { nodesList = GetNodesList(); }
+
             // Go through each node
             foreach (Node node in nodesList)
             {
-                // Calculate the distance
                 float distance = Distance(source, node);
-
-                if (distance <= maxRange && distance >= minRange)
-                { nodesInRange.Add(node); }
+                if (distance <= maxRange && distance >= minRange) { nodesInRange.Add(node); }
             }
 
             return nodesInRange;
@@ -325,12 +359,12 @@ namespace OderonNodes
 
         #region Line of Sight Methods
         // Function testing if there is a clear line of sight between two nodes
-        public static bool IsTargetNodeVisible(Node sourceNode, Node targetNode)
+        public static bool IsTargetNodeVisible(Node sourceNode, Node targetNode, List<Node> nodesList = null)
         {
             if (!targetNode.parameters.blocksLineOfSight)
             {
-                // get the Nodes list
-                List<Node> nodesList = GetNodesManager().NodesList;
+                // If no Nodes List was specified, get it from the current Nodes Manager instance
+                if (nodesList == null) { nodesList = GetNodesList(); }
 
                 // Create the variables
                 bool foundNodeBlockingSight = false;
@@ -400,13 +434,16 @@ namespace OderonNodes
 
         #region Attack Methods
         // List all the nodes that can be attacked from a specific node, with a defined attack range
-        public List<Node> AttackableNodes(Node source, float minRange, float maxRange)
+        public static List<Node> AttackableNodes(Node source, float minRange, float maxRange, List<Node> nodesList = null)
         {
             // Create the list
             List<Node> attackableNodes = new List<Node>();
 
+            // If no Nodes List was specified, get it from the current Nodes Manager instance
+            if (nodesList == null) { nodesList = GetNodesList(); }
+
             // List all the nodes in range
-            List<Node> nodesInRange = NodesInRange(source, minRange, maxRange);
+            List<Node> nodesInRange = NodesInRange(source, minRange, maxRange, nodesList);
 
             // Check each node for line of sight
             foreach (Node node in nodesInRange)
@@ -415,7 +452,7 @@ namespace OderonNodes
                 if (node.parameters.terrainType != Node.TerrainType.Impassable)
                 {
                     // Check for Line of Sight
-                    if (IsTargetNodeVisible(source, node))
+                    if (IsTargetNodeVisible(source, node, nodesList))
                     { attackableNodes.Add(node); }
                 }
             }
@@ -424,37 +461,7 @@ namespace OderonNodes
         }
         #endregion
 
-        public void BuildNeighboursGraph()
-        {
-            // Go through each node
-            foreach (Node initialNode in nodesList)
-            {
-                // Go through each other node, to find the neighbours
-                foreach (Node node in nodesList)
-                {
-                    if (node != initialNode)
-                    {
-                        // Calculate the differences in each axis
-                        float xDifference = node.coordinates.column - initialNode.coordinates.column;
-                        float yDifference = node.coordinates.row - initialNode.coordinates.row;
-
-                        // The node is on the same row, with only a difference of 1 in its line
-                        if (xDifference == 0 && yDifference == 1 || xDifference == 0 && yDifference == -1)
-                        { initialNode.neighbours.Add(node); }
-                        // The node is in a neigbouring row, but on the same line
-                        else if (xDifference == 1 && yDifference == 0 || xDifference == -1 && yDifference == 0)
-                        { initialNode.neighbours.Add(node); }
-                        // The node is in a neighbouring row, but on the previous line (for tiles that aren't shifted)
-                        else if (xDifference == -1 && yDifference == -1 && initialNode.isOnAShiftedColumn == false || xDifference == 1 && yDifference == -1 && initialNode.isOnAShiftedColumn == false)
-                        { initialNode.neighbours.Add(node); }
-                        // The node is in a neighbouring row, but on the next line (for tiles that are shifted)
-                        else if (xDifference == -1 && yDifference == 1 && initialNode.isOnAShiftedColumn == true || xDifference == 1 && yDifference == 1 && initialNode.isOnAShiftedColumn == true)
-                        { initialNode.neighbours.Add(node); }
-                    }
-                }
-            }
-        }
-
+        #region Utilities
         // Method getting the current active Nodes Manager
         public static NodesManager GetNodesManager()
         {
@@ -465,14 +472,19 @@ namespace OderonNodes
             return controllers[0];
         }
 
-        #region getters & Setters
-        public List<Node> NodesList { get { return nodesList; } }
+        // Method getting the Nodes list from the current Nodes Manager
+        public static List<Node> GetNodesList() { return GetNodesManager().NodesList; }
+
+        #region Getters & Setters
+        public List<Node> NodesList { get => nodesList; }
+        #endregion
+
         #endregion
     }
 
     #region Classes & Enums
     // A path is determined by the list of nodes to cross, and its total cost
-    public class Path
+    public class MovementPath
     {
         public List<Node> path = new List<Node>();
         public float cost = Mathf.Infinity;
