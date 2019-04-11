@@ -12,6 +12,10 @@ namespace OderonNodes
         // Lists
         List<Node> nodesList = new List<Node>(); // List of all the nodes (without any other information)
         Dictionary<Node.CubeCoordinates, Node> nodesCubeCoordinates = new Dictionary<Node.CubeCoordinates, Node>(); // List of all the cube coordinates, with the associated node
+
+        // Parameters
+        public static float nodesColumnDifference = -1.55f; // Distance needed to increase the Column coordinate of a title by 1 (will be checked against the X axis)
+        public static float nodesLineDifference = 1.8f; // Distance needed to increase the Line coordinate of a tile by 1 (will be checked against the Z axis)
         #endregion
 
         #region Nodes Initialization

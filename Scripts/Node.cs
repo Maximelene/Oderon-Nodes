@@ -29,8 +29,7 @@ namespace OderonNodes
         MeshRenderer meshRenderer;
 
         // Parameters
-        public static float nodesColumnDifference = -1.55f; // Distance needed to increase the Column coordinate of a title by 1 (will be checked against the X axis)
-        public static float nodesLineDifference = 1.8f; // Distance needed to increase the Line coordinate of a tile by 1 (will be checked against the Z axis)
+        
         #endregion
 
         #region Common Methods
@@ -69,7 +68,7 @@ namespace OderonNodes
             // COLUMN
             // Get the difference in X axis between this node and the initial one
             float xDifference = gameObject.transform.position.x - initialNode.transform.position.x;
-            coordinates.column = Mathf.RoundToInt(xDifference / nodesColumnDifference);
+            coordinates.column = Mathf.RoundToInt(xDifference / NodesManager.nodesColumnDifference);
 
             // if the X coordinate is odd, the node is on a shifted column
             if (coordinates.column % 2 != 0)
@@ -80,9 +79,9 @@ namespace OderonNodes
             float zDifference = gameObject.transform.position.z - initialNode.transform.position.z;
             // If the node is on a shifted row, substract half the difference, to simulate the node being on the same line
             if (isOnAShiftedColumn)
-            { zDifference -= (nodesLineDifference / 2); }
+            { zDifference -= (NodesManager.nodesLineDifference / 2); }
             // Now, calculate the coordinate
-            coordinates.row = Mathf.RoundToInt(zDifference / nodesLineDifference);
+            coordinates.row = Mathf.RoundToInt(zDifference / NodesManager.nodesLineDifference);
             #endregion
 
             #region Cube coordinates
