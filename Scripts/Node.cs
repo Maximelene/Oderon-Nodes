@@ -24,7 +24,6 @@ namespace OderonNodes
         public NodeMaterials materials;
 
         // Components
-        GameObject rendererObject;
         MeshFilter meshFilter;
         MeshRenderer meshRenderer;
 
@@ -35,9 +34,8 @@ namespace OderonNodes
         #region Common Methods
         void Awake()
         {
-            rendererObject = transform.Find("Renderer").gameObject;
-            meshFilter = transform.Find("Renderer").GetComponent<MeshFilter>();
-            meshRenderer = transform.Find("Renderer").GetComponent<MeshRenderer>();
+            meshFilter = GetComponent<MeshFilter>();
+            meshRenderer = GetComponent<MeshRenderer>();
             HighlightNode(HighlightColors.Default);
         }
 
@@ -54,9 +52,9 @@ namespace OderonNodes
             if (parameters.terrainType == TerrainType.Impassable)
             { meshRenderer.enabled = false; }
 
+            // Apply the Border Mesh (the Full Mesh is more practical in the Edirot, the Border Mesh is better in-game)
             // TODO: let Player choose the Node mesh, and their alpha level
             meshFilter.mesh = meshes.bordersMesh;
-            rendererObject.transform.localScale = new Vector3(meshes.bordersMeshScale, 0.1f, meshes.bordersMeshScale);
         }
         #endregion
 
@@ -67,7 +65,7 @@ namespace OderonNodes
             #region Offset coordinates
             // COLUMN
             // Get the difference in X axis between this node and the initial one
-            float xDifference = gameObject.transform.position.x - initialNode.transform.position.x;
+            float xDifference = gameObject.transform.localPosition.x - initialNode.transform.localPosition.x;
             coordinates.column = Mathf.RoundToInt(xDifference / NodesManager.nodesColumnDifference);
 
             // if the X coordinate is odd, the node is on a shifted column
@@ -76,7 +74,7 @@ namespace OderonNodes
 
             // LINE
             // Get the difference in Z axis between this node and the initial one
-            float zDifference = gameObject.transform.position.z - initialNode.transform.position.z;
+            float zDifference = gameObject.transform.localPosition.z - initialNode.transform.localPosition.z;
             // If the node is on a shifted row, substract half the difference, to simulate the node being on the same line
             if (isOnAShiftedColumn)
             { zDifference -= (NodesManager.nodesLineDifference / 2); }
@@ -248,9 +246,7 @@ namespace OderonNodes
         public class NodeMeshes
         {
             public Mesh fullMesh;
-            public float fullMeshScale = 1;
             public Mesh bordersMesh;
-            public float bordersMeshScale = 1;
         }
 
         [System.Serializable]
