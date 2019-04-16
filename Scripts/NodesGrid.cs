@@ -41,34 +41,19 @@ namespace OderonNodes
             nodesToKeep.Clear();
 
             // Generate the Nodes
-            if (gridParameters.type == GridType.Vertical)
+            for (int i = 0; i < gridParameters.height; i++)
             {
-                for (int i = 0; i < gridParameters.width + (Mathf.Floor(gridParameters.height / 2)); i++)
-                {
-                    // Calculate the Z Shift
-                    float zShift = i * -0.9f;
-                    if (i > gridParameters.width - 1)
-                    {
-                        zShift += (i - gridParameters.width + 1) * 3.6f;
+                // Calculate the Z Shift
+                float zShift = 0;
+                if (i % 2 == 1) { zShift = 0.9f; }
+                zShift -= ((gridParameters.width * 2) - 1) * (NodesManager.nodesLineDifference / 4);
+                if (gridParameters.height == 1) { zShift += NodesManager.nodesLineDifference / 4; }
 
-                        SpawnHorizontalLine(gridParameters.height - ((i - gridParameters.width + 1) * 2), i * -NodesManager.nodesColumnDifference, zShift, (i * gridParameters.width) + 1);
-                    }
-                    else
-                    {
-                        SpawnHorizontalLine(Mathf.Clamp(i * 2 + 1, 1, gridParameters.height), i * -NodesManager.nodesColumnDifference, i * -0.9f, (i * gridParameters.width) + 1);
-                    }
-                }
-            }
-            else
-            {
-                for (int i = 0; i < gridParameters.height; i++)
-                {
-                    // Calculate the Z Shift
-                    float zShift = 0;
-                    if (i % 2 == 1) { zShift = 0.9f; }
+                // Calculate the X Shift
+                float xShift = (i * -NodesManager.nodesColumnDifference) + ((gridParameters.height - 1) * (NodesManager.nodesColumnDifference / 2));
 
-                    SpawnHorizontalLine(gridParameters.width, i * -NodesManager.nodesColumnDifference, zShift, (i * gridParameters.width) + 1);
-                }
+                // Generate the line
+                SpawnHorizontalLine(gridParameters.width, xShift, zShift, (i * gridParameters.width) + 1);
             }
 
             // Destroy all the existing nodes that shouldn't be kept (when the grid size is reduced)
@@ -133,7 +118,6 @@ namespace OderonNodes
         [System.Serializable]
         public class GridParameters
         {
-            public GridType type = GridType.Horizontal;
             public int width = 15;
             public int height = 15;
         }
