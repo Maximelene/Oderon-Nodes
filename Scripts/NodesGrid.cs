@@ -18,14 +18,6 @@ namespace OderonNodes
         public GridParameters gridParameters = new GridParameters();
         #endregion
 
-        /*public void InitializeGrid()
-        {
-            foreach (Node joint in GetComponentsInChildren<Node>())
-            {
-
-            }
-        }*/
-
         void Start()
         {
             // Move the grid to a more "usable" in-game position 
@@ -46,8 +38,6 @@ namespace OderonNodes
                 // Calculate the Z Shift
                 float zShift = 0;
                 if (i % 2 == 1) { zShift = 0.9f; }
-                zShift -= ((gridParameters.width * 2) - 1) * (NodesManager.nodesLineDifference / 4);
-                if (gridParameters.height == 1) { zShift += NodesManager.nodesLineDifference / 4; }
 
                 // Calculate the X Shift
                 float xShift = (i * -NodesManager.nodesColumnDifference) + ((gridParameters.height - 1) * (NodesManager.nodesColumnDifference / 2));
@@ -71,15 +61,22 @@ namespace OderonNodes
 
                 if (!nodesCoordinates.ContainsKey(position))
                 {
-                    GameObject newNode = PrefabUtility.InstantiatePrefab(nodePrefab, transform) as GameObject;
-                    newNode.transform.localPosition = position;
-                    newNode.name = "Node " + (startingNumber + i);
+                    GameObject newNode = null;
+                    #if (UNITY_EDITOR)
+                    newNode = PrefabUtility.InstantiatePrefab(nodePrefab, transform) as GameObject;
+                    //GameObject newNode = Instantiate(nodePrefab, transform);
+                    #endif
+                    if (newNode)
+                    {
+                        newNode.transform.localPosition = position;
+                        newNode.name = "Node " + (startingNumber + i);
 
-                    nodesList.Add(newNode);
-                    nodesCoordinates[position] = newNode;
+                        nodesList.Add(newNode);
+                        nodesCoordinates[position] = newNode;
 
-                    // Make sure to keep that node
-                    nodesToKeep.Add(newNode);
+                        // Make sure to keep that node
+                        nodesToKeep.Add(newNode);
+                    }
                 }
                 else
                 {
