@@ -479,6 +479,82 @@ namespace OderonNodes
         // Method getting the Nodes list from the current Nodes Manager
         public static List<Node> GetNodesList() { return GetNodesManager().NodesList; }
 
+        // Method getting the nearest node from a Game Object
+        public static Node FindNearestNode(GameObject gameObject)
+        {
+            // Create the variables
+            Node nearestNode = null;
+            float nearestNodeDistance = Mathf.Infinity;
+
+            // Go through each node
+            foreach (Node node in GetNodesManager().NodesList)
+            {
+                // Make sure the node is not impassable
+                if (node.parameters.terrainType != Node.TerrainType.Impassable)
+                {
+                    // Get the distance between the entity and the node
+                    float distance = Vector3.Distance(gameObject.transform.position, node.transform.position);
+
+                    // If that node is the nearest one found yet, memorize it
+                    if (distance < nearestNodeDistance)
+                    {
+                        nearestNode = node;
+                        nearestNodeDistance = distance;
+                    }
+                }
+            }
+
+            return nearestNode;
+        }
+
+        // Method getting the nearest empty node from a specific node
+        public static Node FindNearestEmptyNode(Node startingNode)
+        {
+            if (startingNode.IsEmpty) { return startingNode; }
+            else
+            {
+                // Create the variable
+                Node nodeFound = null;
+                float maxRange = 1;
+                List<Node> completeNodesList = GetNodesList();
+
+                while (nodeFound == null)
+                {
+                    // Get nodes list
+                    List<Node> nodesToConsider = RandomizeNodesList(NodesInRange(startingNode, 1, maxRange, completeNodesList));
+
+                    foreach (Node node in nodesToConsider)
+                    {
+                        if (node.IsEmpty)
+                        {
+                            nodeFound = node;
+                            break;
+                        }
+                    }
+
+                    if (nodeFound == null)
+                    {
+                        maxRange++;
+                    }
+                }
+
+                return nodeFound;
+            }
+        }
+
+        public static List<Node> RandomizeNodesList(List<Node> list)
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                Node temp = list[i];
+                int randomIndex = UnityEngine.Random.Range(i, list.Count);
+                list[i] = list[randomIndex];
+                list[randomIndex] = temp;
+            }
+
+            return list;
+        }
+
         #region Getters & Setters
         public List<Node> NodesList { get => nodesList; }
         #endregion

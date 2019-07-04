@@ -109,13 +109,6 @@ namespace OderonNodes
         }
         #endregion
 
-
-        
-
-
-
-
-
         #region Movement
         // Function called by a character entering the node
         public void EnterNode(Entity entity)
@@ -133,6 +126,16 @@ namespace OderonNodes
             {
                 alteringEntity.EntityFinishesTurnOnNode(entity);
             }
+        }
+
+        public void LeaveNode(Entity entity)
+        {
+            foreach (Entity alteringEntity in alteringEntities)
+            {
+                alteringEntity.EntityLeavesAlteredNode(entity);
+            }
+
+            FreeNode();
         }
 
         // Function determining the cost to cross that tile (meaning the cost to go from another tile to that one)
@@ -215,6 +218,7 @@ namespace OderonNodes
 
         #region Getters & Setters
         public bool IsOccupied { get { if (occupant != null) { return true; } else { return false; } } }
+        public bool IsEmpty { get { if (occupant == null) { return true; } else { return false; } } }
         public Entity Occupant { get { return occupant; } }
         #endregion
 

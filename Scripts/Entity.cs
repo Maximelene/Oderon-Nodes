@@ -33,7 +33,7 @@ namespace OderonNodes
 
         #region Nodes interaction
         // Function checking for all the nodes, and finding the nearest one
-        public Node FindNearestNode()
+        /*public Node FindNearestNode()
         {
             // Create the variables
             Node nearestNode = null;
@@ -58,7 +58,7 @@ namespace OderonNodes
             }
 
             return nearestNode;
-        }
+        }*/
 
         // Function warping the entity to a specific node
         public void WarpToNode(Node nodeToWarpTo = null, bool occupyNode = true)
@@ -69,7 +69,7 @@ namespace OderonNodes
                 if (node)
                 { nodeToWarpTo = node; }
                 else
-                { nodeToWarpTo = FindNearestNode(); }
+                { nodeToWarpTo = NodesManager.FindNearestNode(gameObject); }
             }
 
             // Register the node
@@ -165,7 +165,7 @@ namespace OderonNodes
                 if (nextWaypoint.node != node && nextWaypointDistance <= currentNodeDistance)
                 {
                     // Free the previous node
-                    node.FreeNode();
+                    node.LeaveNode(this);
 
                     // Update the character's position
                     node = nextWaypoint.node;
@@ -221,6 +221,8 @@ namespace OderonNodes
 
         // Method called when an entity finishes its turn on a node altered by this entity
         public void EntityFinishesTurnOnNode(Entity entity) { entityFinishesTurnOnNodeAlteredByThisEntity(entity); }
+
+        public void EntityLeavesAlteredNode(Entity entity) { entityLeavesNodeAlteredByThisEntity(entity); }
         #endregion
 
         #region Delegates
@@ -234,6 +236,7 @@ namespace OderonNodes
 
         public delegate void OnEntityEntersNodeAlteredByThisEntityDelegate(Entity entity); public OnEntityEntersNodeAlteredByThisEntityDelegate entityEntersNodeAlteredByThisEntity;
         public delegate void OnEntityFinishesTurnOnNodeAlteredByThisEntityDelegate(Entity entity); public OnEntityFinishesTurnOnNodeAlteredByThisEntityDelegate entityFinishesTurnOnNodeAlteredByThisEntity;
+        public delegate void OnEntityLeavesNodeAlteredByThisEntityDelegate(Entity entity); public OnEntityLeavesNodeAlteredByThisEntityDelegate entityLeavesNodeAlteredByThisEntity;
         #endregion
 
         #region Getters & Setters
