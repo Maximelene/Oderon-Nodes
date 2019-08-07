@@ -220,6 +220,7 @@ namespace OderonNodes
         public bool IsOccupied { get { if (occupant != null) { return true; } else { return false; } } }
         public bool IsEmpty { get { if (occupant == null) { return true; } else { return false; } } }
         public Entity Occupant { get { return occupant; } }
+        public bool IsImpassable { get { if (parameters.terrainType == TerrainType.Impassable) { return true; } else { return false; } } }
         #endregion
 
         #region Classes & Enums
