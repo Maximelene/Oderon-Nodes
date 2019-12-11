@@ -15,6 +15,9 @@ namespace OderonNodes
         MovementWaypoint nextWaypoint;
         List<MovementWaypoint> movementWaypoints = new List<MovementWaypoint>();
 
+        [Header("Parameters")]
+        public bool dontMoveOnWarp = false;
+
         // Components
         NavMeshAgent navMeshAgent;
         #endregion
@@ -75,7 +78,7 @@ namespace OderonNodes
             // Register the node
             node = nodeToWarpTo;
 
-            if (node != null)
+            if (node != null && dontMoveOnWarp == false)
             {
                 // If the character is already there, don't do anything
                 if (transform.position.x != nodeToWarpTo.transform.position.x || transform.position.z != nodeToWarpTo.transform.position.z)
@@ -175,16 +178,16 @@ namespace OderonNodes
 
                     enterNewNodeObservers?.Invoke(nextWaypoint.node.CostToEnter());
 
+                    // Trigger the fact that the character entered a Node
+                    nextWaypoint.node.EnterNode(this);
+
                     // Occupy the node
                     node.OccupyNode(gameObject);
                 }
 
                 // If the character is near enough from the waypoint to "reconsider" it (see if it should go to the next one), do it
-                if (nextWaypointDistance <= 0.3f)
+                if (nextWaypointDistance <= 0.1f)
                 {
-                    // Trigger the fact that the character entered a Node
-                    nextWaypoint.node.EnterNode(this);
-
                     // Check to see if the character should move to another waypoint
                     if (nextWaypoint.nextWaypoint != null)
                     {
@@ -207,6 +210,7 @@ namespace OderonNodes
             nextWaypoint = null;
             movementWaypoints.Clear();
             stopMovingObservers?.Invoke();
+            navMeshAgent.ResetPath();
         }
         #endregion
 
@@ -240,7 +244,7 @@ namespace OderonNodes
         #endregion
 
         #region Getters & Setters
-        public Node Node { get { return node; } }
+        public Node Node { get { return node; } set { node = value; } }
         public int MovementLeft { get { return movementLeft; } set { movementLeft = value; } }
         #endregion
 

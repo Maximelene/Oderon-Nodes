@@ -12,7 +12,7 @@ namespace OderonNodes
         #pragma warning restore 649
 
         List<GameObject> nodesToKeep = new List<GameObject>();
-        public List<GameObject> nodesList = new List<GameObject>();
+        [HideInInspector] public List<GameObject> nodesList = new List<GameObject>();
         Dictionary<Vector3, GameObject> nodesCoordinates = new Dictionary<Vector3, GameObject>();
 
         public GridParameters gridParameters = new GridParameters();

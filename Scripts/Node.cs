@@ -10,10 +10,10 @@ namespace OderonNodes
         public NodeParameters parameters;
 
         [Header("Position")]
-        [HideInInspector] public Coordinates coordinates;
-        [HideInInspector] public CubeCoordinates cubeCoordinates;
+        public Coordinates coordinates;
+        public CubeCoordinates cubeCoordinates;
         [HideInInspector] public bool isOnAShiftedColumn = false;
-        [HideInInspector] public List<Node> neighbours = new List<Node>();
+        public List<Node> neighbours = new List<Node>();
 
         [Header("Status")]
         [SerializeField] Entity occupant = null;
@@ -209,9 +209,11 @@ namespace OderonNodes
             meshRenderer.material = material;
         }
 
-        public void UnHighlightNode()
+        public void UnHighlightNode(bool highVisibility = false)
         {
-            if (meshRenderer && materials.defaultMaterial)
+            if (highVisibility && meshRenderer && materials.defaultMaterialVisible)
+            { meshRenderer.sharedMaterial = materials.defaultMaterialVisible; }
+            else if (meshRenderer && materials.defaultMaterial)
             { meshRenderer.sharedMaterial = materials.defaultMaterial; }
         }
         #endregion
@@ -258,6 +260,7 @@ namespace OderonNodes
         public class NodeMaterials
         {
             public Material defaultMaterial;
+            public Material defaultMaterialVisible;
             public Material whiteMaterial;
             public Material greenMaterial;
             public Material yellowMaterial;

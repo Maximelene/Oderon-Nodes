@@ -103,10 +103,10 @@ namespace OderonNodes
         }
 
         // Function un-highlighting every node
-        public void UnHighlightAllNodes()
+        public void UnHighlightAllNodes(bool highVisibility = false)
         {
             foreach (Node node in nodesList)
-            { node.UnHighlightNode(); }
+            { node.UnHighlightNode(highVisibility); }
         }
         #endregion
 
